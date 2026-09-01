@@ -43,7 +43,7 @@
     flex-wrap: wrap;
     gap: 12px;
     padding: 16px clamp(16px, 4vw, 48px);
-    align-items: center;
+    align-items: flex-start;
   }
   select, input[type="text"] {
     padding: 8px 10px;
@@ -53,9 +53,63 @@
     color: var(--text);
     font-size: 0.9rem;
   }
+  .multiselect { position: relative; }
+  .ms-button {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 160px;
+    text-align: left;
+  }
+  .ms-button:hover { border-color: var(--accent); }
+  .ms-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 20;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .ms-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ms-actions button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 4px;
+  }
+  .ms-actions button:hover { text-decoration: underline; }
+  .ms-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .ms-option:hover { background: var(--chip-bg); }
+  .ms-option input { cursor: pointer; }
   main {
     padding: 0 clamp(16px, 4vw, 48px) 48px;
-    max-width: 1000px;
+    max-width: 1100px;
   }
   .org-block { margin-bottom: 28px; }
   .org-title {
@@ -109,8 +163,28 @@
   <div class="meta" id="meta">Loading...</div>
 </header>
 <div class="controls">
-  <label for="user-select">Assignee:</label>
-  <select id="user-select"></select>
+  <div class="multiselect" id="assignee-ms">
+    <button type="button" class="ms-button" id="assignee-ms-btn">Assignee: All</button>
+    <div class="ms-panel" id="assignee-ms-panel" hidden>
+      <div class="ms-actions">
+        <button type="button" data-action="all">全選</button>
+        <button type="button" data-action="none">全不選</button>
+      </div>
+      <div class="ms-options" id="assignee-ms-options"></div>
+    </div>
+  </div>
+
+  <div class="multiselect" id="status-ms">
+    <button type="button" class="ms-button" id="status-ms-btn">Status: All</button>
+    <div class="ms-panel" id="status-ms-panel" hidden>
+      <div class="ms-actions">
+        <button type="button" data-action="all">全選</button>
+        <button type="button" data-action="none">全不選</button>
+      </div>
+      <div class="ms-options" id="status-ms-options"></div>
+    </div>
+  </div>
+
   <label for="state-select">State:</label>
   <select id="state-select">
     <option value="ALL">All</option>
@@ -125,6 +199,78 @@
 
 <script>
 let DATA = null;
+let selectedLogins = new Set();
+let selectedStatuses = new Set();
+let openPanels = [];
+
+const NO_STATUS_LABEL = "(no status)";
+
+function closeAllPanels() {
+  for (const p of openPanels) p.hidden = true;
+}
+
+function setupMultiSelect({ btnId, panelId, optionsId, items, selected, label }) {
+  const btn = document.getElementById(btnId);
+  const panel = document.getElementById(panelId);
+  const optionsEl = document.getElementById(optionsId);
+
+  function updateButtonLabel() {
+    if (items.length === 0) {
+      btn.textContent = `${label}: (none)`;
+    } else if (selected.size === items.length) {
+      btn.textContent = `${label}: All`;
+    } else if (selected.size === 0) {
+      btn.textContent = `${label}: None`;
+    } else {
+      btn.textContent = `${label}: ${selected.size}/${items.length}`;
+    }
+  }
+
+  optionsEl.innerHTML = "";
+  for (const item of items) {
+    const optLabel = document.createElement("label");
+    optLabel.className = "ms-option";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = selected.has(item.key);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(item.key);
+      else selected.delete(item.key);
+      updateButtonLabel();
+      render();
+    });
+    const span = document.createElement("span");
+    span.textContent = item.label;
+    optLabel.appendChild(cb);
+    optLabel.appendChild(span);
+    optionsEl.appendChild(optLabel);
+  }
+
+  panel.querySelector('[data-action="all"]').addEventListener("click", () => {
+    selected.clear();
+    for (const item of items) selected.add(item.key);
+    for (const cb of optionsEl.querySelectorAll("input")) cb.checked = true;
+    updateButtonLabel();
+    render();
+  });
+  panel.querySelector('[data-action="none"]').addEventListener("click", () => {
+    selected.clear();
+    for (const cb of optionsEl.querySelectorAll("input")) cb.checked = false;
+    updateButtonLabel();
+    render();
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isHidden = panel.hidden;
+    closeAllPanels();
+    panel.hidden = !isHidden;
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+
+  updateButtonLabel();
+  openPanels.push(panel);
+}
 
 function groupByOrgProject(items) {
   const orgs = new Map();
@@ -139,22 +285,22 @@ function groupByOrgProject(items) {
   return orgs;
 }
 
-function render() {
-  const login = document.getElementById("user-select").value;
+function getFilteredItems() {
   const stateFilter = document.getElementById("state-select").value;
   const search = document.getElementById("search-box").value.trim().toLowerCase();
 
-  const user = DATA.users.find((u) => u.login === login);
-  const main = document.getElementById("main");
-  main.innerHTML = "";
-
-  if (!user) {
-    main.innerHTML = '<div class="empty">No user selected.</div>';
-    return;
+  let items = [];
+  for (const user of DATA.users) {
+    if (!selectedLogins.has(user.login)) continue;
+    for (const item of user.items || []) {
+      items.push({ ...item, assigneeLogin: user.login, assigneeName: user.name });
+    }
   }
 
-  let items = user.items || [];
   if (stateFilter !== "ALL") items = items.filter((i) => i.state === stateFilter);
+
+  items = items.filter((i) => selectedStatuses.has(i.status || NO_STATUS_LABEL));
+
   if (search) {
     items = items.filter(
       (i) =>
@@ -162,6 +308,24 @@ function render() {
         (i.repo || "").toLowerCase().includes(search)
     );
   }
+
+  return items;
+}
+
+function render() {
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+
+  if (selectedLogins.size === 0) {
+    main.innerHTML = '<div class="empty">請至少選擇一位 Assignee。</div>';
+    return;
+  }
+  if (selectedStatuses.size === 0) {
+    main.innerHTML = '<div class="empty">請至少選擇一個 Status。</div>';
+    return;
+  }
+
+  const items = getFilteredItems();
 
   if (items.length === 0) {
     main.innerHTML = '<div class="empty">沒有符合條件的任務。</div>';
@@ -202,15 +366,22 @@ function render() {
       wrap.className = "overflow-wrap";
       const table = document.createElement("table");
       table.innerHTML = `
-        <thead><tr><th>#</th><th>Title</th><th>Repo</th><th>State</th><th>Status</th></tr></thead>
+        <thead><tr><th>#</th><th>Title</th><th>Repo</th><th>Assignee</th><th>State</th><th>Status</th></tr></thead>
       `;
       const tbody = document.createElement("tbody");
-      for (const item of proj.items.sort((a, b) => a.number - b.number)) {
+      const sortedItems = proj.items.sort(
+        (a, b) => a.assigneeLogin.localeCompare(b.assigneeLogin) || a.number - b.number
+      );
+      for (const item of sortedItems) {
+        const assigneeLabel = item.assigneeName
+          ? `${item.assigneeName} (${item.assigneeLogin})`
+          : item.assigneeLogin;
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>#${item.number}</td>
           <td><a href="${item.url}" target="_blank">${escapeHtml(item.title)}</a></td>
           <td>${escapeHtml(item.repo || "")}</td>
+          <td>${escapeHtml(assigneeLabel)}</td>
           <td>${item.state}</td>
           <td>${item.status ? `<span class="status-chip">${escapeHtml(item.status)}</span>` : ""}</td>
         `;
@@ -250,18 +421,45 @@ async function init() {
     return;
   }
 
-  const select = document.getElementById("user-select");
   const sortedUsers = [...DATA.users].sort((a, b) => a.login.localeCompare(b.login));
-  for (const u of sortedUsers) {
-    const opt = document.createElement("option");
-    opt.value = u.login;
-    opt.textContent = u.name ? `${u.name} (${u.login})` : u.login;
-    select.appendChild(opt);
-  }
+  selectedLogins = new Set(sortedUsers.map((u) => u.login));
 
-  document.getElementById("user-select").addEventListener("change", render);
+  const statusSet = new Set();
+  let hasNoStatus = false;
+  for (const u of DATA.users) {
+    for (const item of u.items || []) {
+      if (item.status) statusSet.add(item.status);
+      else hasNoStatus = true;
+    }
+  }
+  const sortedStatuses = Array.from(statusSet).sort();
+  if (hasNoStatus) sortedStatuses.push(NO_STATUS_LABEL);
+  selectedStatuses = new Set(sortedStatuses);
+
+  setupMultiSelect({
+    btnId: "assignee-ms-btn",
+    panelId: "assignee-ms-panel",
+    optionsId: "assignee-ms-options",
+    items: sortedUsers.map((u) => ({
+      key: u.login,
+      label: u.name ? `${u.name} (${u.login})` : u.login,
+    })),
+    selected: selectedLogins,
+    label: "Assignee",
+  });
+
+  setupMultiSelect({
+    btnId: "status-ms-btn",
+    panelId: "status-ms-panel",
+    optionsId: "status-ms-options",
+    items: sortedStatuses.map((s) => ({ key: s, label: s })),
+    selected: selectedStatuses,
+    label: "Status",
+  });
+
   document.getElementById("state-select").addEventListener("change", render);
   document.getElementById("search-box").addEventListener("input", render);
+  document.addEventListener("click", () => closeAllPanels());
 
   render();
 }
