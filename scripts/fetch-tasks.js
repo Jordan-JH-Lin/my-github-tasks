@@ -38,18 +38,9 @@ async function gql(query, variables) {
   return json.data;
 }
 
-async function listOrgs() {
-  const query = `
-    query {
-      viewer {
-        organizations(first: 100) {
-          nodes { login }
-        }
-      }
-    }
-  `;
-  const data = await gql(query, {});
-  return data.viewer.organizations.nodes.map((n) => n.login);
+function loadConfiguredOrgs() {
+  const configPath = path.join(__dirname, "..", "config", "orgs.json");
+  return JSON.parse(fs.readFileSync(configPath, "utf8"));
 }
 
 async function listOrgMembers(org) {
@@ -157,9 +148,8 @@ async function searchAssignedIssues(login) {
 }
 
 async function main() {
-  console.log("Listing orgs...");
-  const orgs = await listOrgs();
-  console.log(`Found ${orgs.length} orgs: ${orgs.join(", ")}`);
+  const orgs = loadConfiguredOrgs();
+  console.log(`Using ${orgs.length} configured orgs: ${orgs.join(", ")}`);
 
   const memberMap = new Map(); // login -> { login, name, avatarUrl }
   for (const org of orgs) {

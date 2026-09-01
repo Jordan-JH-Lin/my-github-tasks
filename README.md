@@ -3,12 +3,16 @@
 跨 Organization / Project 的個人（與團隊）工作總覽頁面。
 
 排程（GitHub Actions，每 30 分鐘）會：
-1. 用一個具備 `read:org` + `repo` + `project` 權限的 token，列出這個 token 看得到的所有 GitHub Organization。
+1. 讀取 `config/orgs.json` 裡指定的 org 清單。
 2. 抓取每個 org 的成員名單，合併去重成一份團隊名單。
 3. 對名單裡每個人查詢 `assignee:<login> is:issue`，並對每筆 issue 查它所屬的 Projects v2 專案與 Status 欄位。
 4. 把結果寫成 `docs/data.json`，交給 `docs/index.html` 這個純前端靜態頁面渲染（依 Org → Project 分組，可用下拉選單切換看任何人的任務）。
 
 ## 建置
+
+### 0. 設定要納入的 org
+
+編輯 `config/orgs.json`，列出要抓成員/任務的 org login（目前：`EY-DnD-BoehringerIngelheim`、`EY-DnD-StudioA`、`EY-DnD-Unilever`、`EY-DnD-QSquare`）。這個 token 看得到但沒列在這裡的 org 會被略過。
 
 ### 1. 建立 token 並設定成 repo secret
 
