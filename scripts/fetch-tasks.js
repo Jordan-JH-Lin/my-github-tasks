@@ -76,7 +76,7 @@ function projectOwnerLogin(owner) {
   return owner.login || null;
 }
 
-async function searchAssignedIssues(login, excludedProjectUrls) {
+async function searchAssignedIssues(login, excludedProjectUrls, allowedOrgs) {
   const query = `
     query($q: String!, $cursor: String) {
       search(query: $q, type: ISSUE, first: 50, after: $cursor) {
@@ -118,6 +118,7 @@ async function searchAssignedIssues(login, excludedProjectUrls) {
       const repoOwner = node.repository.owner.login;
       const repoName = node.repository.name;
       if (node.projectItems.nodes.length === 0) {
+        if (!allowedOrgs.has(repoOwner)) continue;
         items.push({
           org: repoOwner,
           project: null,
@@ -133,6 +134,7 @@ async function searchAssignedIssues(login, excludedProjectUrls) {
         for (const pi of node.projectItems.nodes) {
           if (excludedProjectUrls.has(pi.project.url)) continue;
           const org = projectOwnerLogin(pi.project.owner) || repoOwner;
+          if (!allowedOrgs.has(org)) continue;
           items.push({
             org,
             project: pi.project.title,
@@ -155,6 +157,7 @@ async function searchAssignedIssues(login, excludedProjectUrls) {
 
 async function main() {
   const orgs = loadConfiguredOrgs();
+  const allowedOrgs = new Set(orgs);
   const excludedProjectUrls = loadExcludedProjectUrls();
   console.log(`Using ${orgs.length} configured orgs: ${orgs.join(", ")}`);
   console.log(`Excluding ${excludedProjectUrls.size} projects`);
@@ -180,7 +183,7 @@ async function main() {
   const users = [];
   for (const person of roster) {
     try {
-      const items = await searchAssignedIssues(person.login, excludedProjectUrls);
+      const items = await searchAssignedIssues(person.login, excludedProjectUrls, allowedOrgs);
       users.push({ ...person, items });
       console.log(`  ${person.login}: ${items.length} assigned items`);
     } catch (e) {

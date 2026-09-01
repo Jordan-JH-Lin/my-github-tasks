@@ -12,7 +12,7 @@
 
 ### 0. 設定要納入的 org
 
-編輯 `config/orgs.json`，列出要抓成員/任務的 org login（目前：`EY-DnD-BoehringerIngelheim`、`EY-DnD-Unilever`、`EY-DnD-McDonalds`、`EY-DnD-QSquare`）。這個 token 看得到但沒列在這裡的 org 會被略過。
+編輯 `config/orgs.json`，列出要抓成員/任務的 org login（目前：`EY-DnD-BoehringerIngelheim`、`EY-DnD-Unilever`、`EY-DnD-McDonalds`、`EY-DnD-QSquare`）。這份清單同時也是白名單：拿來決定要抓哪些 org 的成員，也用來過濾查到的 issue（issue 所屬 org 不在清單內就丟棄，即使 assignee 剛好是名單裡的人、且該 org 是這個 token 看得到的）。
 
 如果有些 Projects v2（例如已 closed 或用不到的 untitled project）不想出現在 dashboard 上，把它的網址加進 `config/excluded-projects.json`（例如 `https://github.com/orgs/<org>/projects/<number>`）。屬於被排除 project 的 issue 就不會被列出。
 
