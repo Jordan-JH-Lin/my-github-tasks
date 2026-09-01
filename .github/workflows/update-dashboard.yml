@@ -9,6 +9,7 @@ on:
     paths:
       - "docs/index.html"
       - "scripts/**"
+      - "config/**"
       - ".github/workflows/update-dashboard.yml"
 
 permissions:
