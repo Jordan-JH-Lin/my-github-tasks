@@ -20,11 +20,11 @@ gh secret set GH_TASKS_TOKEN --repo <owner>/<repo>
 
 > 如果任一 org 對 PAT 存取有限制（Organization Settings → Personal access tokens），需要該 org owner 額外核准這個 token，否則該 org 的成員 / 任務會抓不到（腳本會在 log 印出警告但不會整個失敗）。
 
-### 2. 啟用 GitHub Pages（來源設為 GitHub Actions）
+### 2. GitHub Pages
 
-Repo → Settings → Pages → Build and deployment → Source：選擇 **GitHub Actions**。
+已啟用（Source: GitHub Actions），網址：https://jordan-jh-lin.github.io/my-github-tasks/
 
-> Private repo 要讓 Pages 網站限制「只有被邀請的人能看」，需要 GitHub Pro（個人版）、Team 或 Enterprise Cloud 方案。如果方案不支援，Pages 網址會是「知道網址即可看」的公開狀態，請評估資料敏感性後再決定要不要開放。
+> ⚠️ 這個 repo 是 **public**（免費個人方案的 private repo 不支援 GitHub Pages），代表 `docs/data.json`／這個網址只要有人知道連結就看得到全組的指派資訊。如果之後要收回成不公開，可以升級 GitHub Pro（個人版每月約 $4）再把 repo 改回 private，Pages 會自動變成需要有 repo 讀取權限才能看。
 
 ### 3. 觸發第一次執行
 
