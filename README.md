@@ -14,6 +14,8 @@
 
 編輯 `config/orgs.json`，列出要抓成員/任務的 org login（目前：`EY-DnD-BoehringerIngelheim`、`EY-DnD-Unilever`、`EY-DnD-McDonalds`、`EY-DnD-QSquare`）。這個 token 看得到但沒列在這裡的 org 會被略過。
 
+如果有些 Projects v2（例如已 closed 或用不到的 untitled project）不想出現在 dashboard 上，把它的網址加進 `config/excluded-projects.json`（例如 `https://github.com/orgs/<org>/projects/<number>`）。屬於被排除 project 的 issue 就不會被列出。
+
 ### 1. 建立 token 並設定成 repo secret
 
 需要一個 classic PAT，scopes：`repo`、`read:org`、`project`。

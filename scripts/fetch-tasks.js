@@ -43,6 +43,11 @@ function loadConfiguredOrgs() {
   return JSON.parse(fs.readFileSync(configPath, "utf8"));
 }
 
+function loadExcludedProjectUrls() {
+  const configPath = path.join(__dirname, "..", "config", "excluded-projects.json");
+  return new Set(JSON.parse(fs.readFileSync(configPath, "utf8")));
+}
+
 async function listOrgMembers(org) {
   const query = `
     query($org: String!, $cursor: String) {
@@ -71,7 +76,7 @@ function projectOwnerLogin(owner) {
   return owner.login || null;
 }
 
-async function searchAssignedIssues(login) {
+async function searchAssignedIssues(login, excludedProjectUrls) {
   const query = `
     query($q: String!, $cursor: String) {
       search(query: $q, type: ISSUE, first: 50, after: $cursor) {
@@ -126,6 +131,7 @@ async function searchAssignedIssues(login) {
         });
       } else {
         for (const pi of node.projectItems.nodes) {
+          if (excludedProjectUrls.has(pi.project.url)) continue;
           const org = projectOwnerLogin(pi.project.owner) || repoOwner;
           items.push({
             org,
@@ -149,7 +155,9 @@ async function searchAssignedIssues(login) {
 
 async function main() {
   const orgs = loadConfiguredOrgs();
+  const excludedProjectUrls = loadExcludedProjectUrls();
   console.log(`Using ${orgs.length} configured orgs: ${orgs.join(", ")}`);
+  console.log(`Excluding ${excludedProjectUrls.size} projects`);
 
   const memberMap = new Map(); // login -> { login, name, avatarUrl }
   for (const org of orgs) {
@@ -172,7 +180,7 @@ async function main() {
   const users = [];
   for (const person of roster) {
     try {
-      const items = await searchAssignedIssues(person.login);
+      const items = await searchAssignedIssues(person.login, excludedProjectUrls);
       users.push({ ...person, items });
       console.log(`  ${person.login}: ${items.length} assigned items`);
     } catch (e) {
