@@ -324,12 +324,17 @@
     </div>
   </div>
 
-  <label for="state-select">State:</label>
-  <select id="state-select">
-    <option value="ALL">All</option>
-    <option value="OPEN" selected>Open</option>
-    <option value="CLOSED">Closed</option>
-  </select>
+  <div class="multiselect" id="project-ms">
+    <button type="button" class="ms-button" id="project-ms-btn">Project: All</button>
+    <div class="ms-panel" id="project-ms-panel" hidden>
+      <div class="ms-actions">
+        <button type="button" data-action="all">全選</button>
+        <button type="button" data-action="none">全不選</button>
+      </div>
+      <div class="ms-options" id="project-ms-options"></div>
+    </div>
+  </div>
+
   <input type="text" id="search-box" placeholder="Filter by title / repo..." />
 </div>
 <main id="main">
@@ -340,7 +345,12 @@
 let DATA = null;
 let selectedLogins = new Set();
 let selectedStatuses = new Set();
+let selectedProjects = new Set();
 let openPanels = [];
+
+function projectKey(item) {
+  return `${item.org || "(unknown org)"}::${item.project || "(no project)"}`;
+}
 
 const NO_STATUS_LABEL = "(no status)";
 
@@ -461,7 +471,6 @@ function groupByOrgProject(items) {
 }
 
 function getFilteredItems() {
-  const stateFilter = document.getElementById("state-select").value;
   const search = document.getElementById("search-box").value.trim().toLowerCase();
 
   let items = [];
@@ -472,7 +481,7 @@ function getFilteredItems() {
     }
   }
 
-  if (stateFilter !== "ALL") items = items.filter((i) => i.state === stateFilter);
+  items = items.filter((i) => selectedProjects.has(projectKey(i)));
 
   items = items.filter((i) =>
     selectedStatuses.has(i.status ? normalizeStatusKey(i.status) : NO_STATUS_LABEL)
@@ -499,6 +508,10 @@ function render() {
   }
   if (selectedStatuses.size === 0) {
     main.innerHTML = '<div class="empty">請至少選擇一個 Status。</div>';
+    return;
+  }
+  if (selectedProjects.size === 0) {
+    main.innerHTML = '<div class="empty">請至少選擇一個 Project。</div>';
     return;
   }
 
@@ -596,7 +609,7 @@ function statusChipClass(status) {
   return "";
 }
 
-const DUE_SOON_DAYS = 3;
+const DUE_SOON_DAYS = 7;
 
 function daysUntil(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -720,7 +733,29 @@ async function init() {
     label: "Status",
   });
 
-  document.getElementById("state-select").addEventListener("change", render);
+  const projectMap = new Map();
+  for (const u of DATA.users) {
+    for (const item of u.items || []) {
+      const key = projectKey(item);
+      if (!projectMap.has(key)) {
+        projectMap.set(key, `${item.project || "(no project)"} (${item.org || "(unknown org)"})`);
+      }
+    }
+  }
+  const projectItems = [...projectMap.entries()]
+    .map(([key, label]) => ({ key, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  selectedProjects = new Set(projectItems.map((p) => p.key));
+
+  setupMultiSelect({
+    btnId: "project-ms-btn",
+    panelId: "project-ms-panel",
+    optionsId: "project-ms-options",
+    items: projectItems,
+    selected: selectedProjects,
+    label: "Project",
+  });
+
   document.getElementById("search-box").addEventListener("input", render);
   document.addEventListener("click", () => closeAllPanels());
 

@@ -111,7 +111,7 @@ async function searchAssignedIssues(login, excludedProjectUrls, allowedOrgs) {
       }
     }
   `;
-  const q = `assignee:${login} is:issue archived:false`;
+  const q = `assignee:${login} is:issue is:open archived:false`;
   const items = [];
   let cursor = null;
   while (true) {
