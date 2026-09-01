@@ -345,9 +345,6 @@ let openPanels = [];
 const NO_STATUS_LABEL = "(no status)";
 
 const STATUS_LIST = [
-  "PARKING LOT",
-  "BACKLOG",
-  "需求確認中",
   "READY FOR RD",
   "RD處理中",
   "待部署DEV",
@@ -365,37 +362,18 @@ const STATUS_LIST = [
   "UAT QA測試中",
   "UAT測試完成",
   "UAT QA測試完成",
-  "客戶測試中",
-  "UAT 客戶測試中",
-  "待佈署PROD",
-  "待上PROD",
-  "已上PROD",
-  "PREPROD測試中",
-  "PROD測試中",
-  "DONE",
-  "CANCELLED",
   // Unilever #5 (dev worklist) 專用流程
   "未開始",
   "開發中",
   "可進測試",
   "卡住",
   // Unilever #4 (spec tickets) 專用流程
-  "待提問",
   "討論中",
   "待補充",
   "已決議",
-  "已落規格",
-  "作廢",
 ];
 
-const DEFAULT_UNCHECKED_STATUSES = new Set([
-  "PARKING LOT",
-  "BACKLOG",
-  "DONE",
-  "CANCELLED",
-  "已落規格",
-  "作廢",
-]);
+const DEFAULT_UNCHECKED_STATUSES = new Set([]);
 
 function normalizeStatusKey(s) {
   const trimmed = (s || "").trim();
@@ -608,8 +586,8 @@ function render() {
   }
 }
 
-const DONE_STATUS_KEYWORDS = ["DONE", "已上PROD", "已決議"];
-const MUTED_STATUS_KEYWORDS = ["PARKING LOT", "BACKLOG", "CANCELLED", "作廢", "未開始", "卡住"];
+const DONE_STATUS_KEYWORDS = ["已決議"];
+const MUTED_STATUS_KEYWORDS = ["未開始", "卡住"];
 
 function statusChipClass(status) {
   const key = normalizeStatusKey(status);
