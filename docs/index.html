@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My GitHub Tasks</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f8;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #e2e2e5;
+    --accent: #2563eb;
+    --chip-bg: #eef2ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214;
+      --card-bg: #1c1c1f;
+      --text: #ececec;
+      --muted: #9a9a9a;
+      --border: #2e2e33;
+      --accent: #6d94ff;
+      --chip-bg: #232a44;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 24px clamp(16px, 4vw, 48px) 8px;
+  }
+  h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  .meta { color: var(--muted); font-size: 0.85rem; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px clamp(16px, 4vw, 48px);
+    align-items: center;
+  }
+  select, input[type="text"] {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  main {
+    padding: 0 clamp(16px, 4vw, 48px) 48px;
+    max-width: 1000px;
+  }
+  .org-block { margin-bottom: 28px; }
+  .org-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+  }
+  .project-block { margin: 12px 0 0 4px; }
+  .project-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.88rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .status-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--accent);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+  .overflow-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>My GitHub Tasks</h1>
+  <div class="meta" id="meta">Loading...</div>
+</header>
+<div class="controls">
+  <label for="user-select">Assignee:</label>
+  <select id="user-select"></select>
+  <label for="state-select">State:</label>
+  <select id="state-select">
+    <option value="ALL">All</option>
+    <option value="OPEN" selected>Open</option>
+    <option value="CLOSED">Closed</option>
+  </select>
+  <input type="text" id="search-box" placeholder="Filter by title / repo..." />
+</div>
+<main id="main">
+  <div class="empty">Loading data.json...</div>
+</main>
+
+<script>
+let DATA = null;
+
+function groupByOrgProject(items) {
+  const orgs = new Map();
+  for (const item of items) {
+    const orgKey = item.org || "(unknown org)";
+    if (!orgs.has(orgKey)) orgs.set(orgKey, new Map());
+    const projMap = orgs.get(orgKey);
+    const projKey = item.project || "(no project)";
+    if (!projMap.has(projKey)) projMap.set(projKey, { url: item.projectUrl, items: [] });
+    projMap.get(projKey).items.push(item);
+  }
+  return orgs;
+}
+
+function render() {
+  const login = document.getElementById("user-select").value;
+  const stateFilter = document.getElementById("state-select").value;
+  const search = document.getElementById("search-box").value.trim().toLowerCase();
+
+  const user = DATA.users.find((u) => u.login === login);
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+
+  if (!user) {
+    main.innerHTML = '<div class="empty">No user selected.</div>';
+    return;
+  }
+
+  let items = user.items || [];
+  if (stateFilter !== "ALL") items = items.filter((i) => i.state === stateFilter);
+  if (search) {
+    items = items.filter(
+      (i) =>
+        i.title.toLowerCase().includes(search) ||
+        (i.repo || "").toLowerCase().includes(search)
+    );
+  }
+
+  if (items.length === 0) {
+    main.innerHTML = '<div class="empty">沒有符合條件的任務。</div>';
+    return;
+  }
+
+  const orgs = groupByOrgProject(items);
+  const sortedOrgs = Array.from(orgs.keys()).sort();
+
+  for (const orgKey of sortedOrgs) {
+    const orgBlock = document.createElement("div");
+    orgBlock.className = "org-block";
+    const orgTitle = document.createElement("div");
+    orgTitle.className = "org-title";
+    orgTitle.textContent = orgKey;
+    orgBlock.appendChild(orgTitle);
+
+    const projMap = orgs.get(orgKey);
+    const sortedProjects = Array.from(projMap.keys()).sort();
+    for (const projKey of sortedProjects) {
+      const proj = projMap.get(projKey);
+      const projBlock = document.createElement("div");
+      projBlock.className = "project-block";
+      const projTitle = document.createElement("div");
+      projTitle.className = "project-title";
+      if (proj.url) {
+        const a = document.createElement("a");
+        a.href = proj.url;
+        a.target = "_blank";
+        a.textContent = projKey;
+        projTitle.appendChild(a);
+      } else {
+        projTitle.textContent = projKey;
+      }
+      projBlock.appendChild(projTitle);
+
+      const wrap = document.createElement("div");
+      wrap.className = "overflow-wrap";
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead><tr><th>#</th><th>Title</th><th>Repo</th><th>State</th><th>Status</th></tr></thead>
+      `;
+      const tbody = document.createElement("tbody");
+      for (const item of proj.items.sort((a, b) => a.number - b.number)) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>#${item.number}</td>
+          <td><a href="${item.url}" target="_blank">${escapeHtml(item.title)}</a></td>
+          <td>${escapeHtml(item.repo || "")}</td>
+          <td>${item.state}</td>
+          <td>${item.status ? `<span class="status-chip">${escapeHtml(item.status)}</span>` : ""}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      projBlock.appendChild(wrap);
+      orgBlock.appendChild(projBlock);
+    }
+    main.appendChild(orgBlock);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+async function init() {
+  try {
+    const res = await fetch("data.json", { cache: "no-store" });
+    DATA = await res.json();
+  } catch (e) {
+    document.getElementById("main").innerHTML =
+      '<div class="empty">無法載入 data.json，請確認排程是否已成功執行一次。</div>';
+    return;
+  }
+
+  document.getElementById("meta").textContent =
+    `Last updated: ${new Date(DATA.generatedAt).toLocaleString()} · ${DATA.orgs.length} orgs · ${DATA.users.length} people`;
+
+  if (!DATA.users || DATA.users.length === 0) {
+    document.getElementById("main").innerHTML =
+      '<div class="empty">尚無資料，排程執行後會自動出現。</div>';
+    return;
+  }
+
+  const select = document.getElementById("user-select");
+  const sortedUsers = [...DATA.users].sort((a, b) => a.login.localeCompare(b.login));
+  for (const u of sortedUsers) {
+    const opt = document.createElement("option");
+    opt.value = u.login;
+    opt.textContent = u.name ? `${u.name} (${u.login})` : u.login;
+    select.appendChild(opt);
+  }
+
+  document.getElementById("user-select").addEventListener("change", render);
+  document.getElementById("state-select").addEventListener("change", render);
+  document.getElementById("search-box").addEventListener("input", render);
+
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
