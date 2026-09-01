@@ -44,6 +44,17 @@ node scripts/fetch-tasks.js
 # 產生 docs/data.json，可直接用瀏覽器打開 docs/index.html 檢查（部分瀏覽器需要用簡易 http server 才能 fetch 本機 json，例如 npx serve docs）
 ```
 
+### 用假資料預覽畫面（不需要 token，也不用等部署）
+
+改 `docs/index.html` 的排版/樣式時，不用每次都跑 `fetch-tasks.js` 或推上去等 Pages 部署，直接用內建的假資料伺服器：
+
+```bash
+node scripts/dev-preview.js
+# 開瀏覽器連 http://localhost:4173/
+```
+
+這會用 `scripts/dev-preview-data.json`（多 org / 多 project / 中英文長標題 / 各種 status 的假資料）取代 `docs/data.json`，不會動到真的資料檔。改完 `docs/index.html` 重新整理頁面就看得到最新結果。
+
 ## 已知限制
 
 - 只涵蓋 Projects v2（新版 Projects）。舊版 Projects（classic）不支援。

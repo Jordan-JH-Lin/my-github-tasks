@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>My GitHub Tasks</title>
 <style>
   :root {
@@ -14,6 +14,16 @@
     --border: #e2e2e5;
     --accent: #2563eb;
     --chip-bg: #eef2ff;
+    --chip-muted-bg: #eceef1;
+    --chip-muted-text: #6b6b6b;
+    --chip-done-bg: #e6f4ea;
+    --chip-done-text: #1e7d3c;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --pad-x: clamp(16px, 4vw, 48px);
+    --row-overdue-bg: #fdeeee;
+    --row-overdue-bg-hover: #fbe1e1;
+    --row-soon-bg: #fff8e8;
+    --row-soon-bg-hover: #fff0cc;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -24,9 +34,19 @@
       --border: #2e2e33;
       --accent: #6d94ff;
       --chip-bg: #232a44;
+      --chip-muted-bg: #2a2a2e;
+      --chip-muted-text: #9a9a9a;
+      --chip-done-bg: #17301f;
+      --chip-done-text: #6fd68f;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --row-overdue-bg: #3a1416;
+      --row-overdue-bg-hover: #4a1a1d;
+      --row-soon-bg: #332a0c;
+      --row-soon-bg-hover: #423613;
     }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; min-width: 0; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
@@ -34,48 +54,71 @@
     color: var(--text);
   }
   header {
-    padding: 24px clamp(16px, 4vw, 48px) 8px;
-  }
-  h1 { margin: 0 0 4px; font-size: 1.5rem; }
-  .meta { color: var(--muted); font-size: 0.85rem; }
-  .controls {
+    padding: 14px var(--pad-x);
+    padding-left: calc(var(--pad-x) + env(safe-area-inset-left));
+    padding-right: calc(var(--pad-x) + env(safe-area-inset-right));
+    border-bottom: 1px solid var(--border);
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 16px clamp(16px, 4vw, 48px);
-    align-items: flex-start;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+  h1 { margin: 0; font-size: 1.25rem; }
+  .meta { color: var(--muted); font-size: 0.8rem; }
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px var(--pad-x);
+    padding-left: calc(var(--pad-x) + env(safe-area-inset-left));
+    padding-right: calc(var(--pad-x) + env(safe-area-inset-right));
+    align-items: stretch;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
   }
   select, input[type="text"] {
-    padding: 8px 10px;
+    padding: 9px 10px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--card-bg);
     color: var(--text);
     font-size: 0.9rem;
   }
-  .multiselect { position: relative; }
+  select:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  #search-box { flex: 1 1 200px; min-width: 140px; }
+  .multiselect { position: relative; flex: 0 1 auto; }
   .ms-button {
-    padding: 8px 10px;
+    padding: 9px 10px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--card-bg);
     color: var(--text);
     font-size: 0.9rem;
     cursor: pointer;
-    min-width: 160px;
+    width: 100%;
+    min-width: 150px;
     text-align: left;
+    white-space: nowrap;
   }
   .ms-button:hover { border-color: var(--accent); }
   .ms-panel {
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    z-index: 20;
+    z-index: 40;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    min-width: 240px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    width: max(240px, 100%);
+    max-width: min(320px, calc(100vw - 32px));
     max-height: 320px;
     overflow-y: auto;
     padding: 8px;
@@ -86,6 +129,9 @@
     margin-bottom: 6px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--card-bg);
   }
   .ms-actions button {
     background: none;
@@ -93,23 +139,26 @@
     color: var(--accent);
     cursor: pointer;
     font-size: 0.8rem;
-    padding: 2px 4px;
+    padding: 4px 6px;
   }
   .ms-actions button:hover { text-decoration: underline; }
   .ms-option {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px;
+    gap: 8px;
+    padding: 6px 4px;
     font-size: 0.85rem;
     cursor: pointer;
     border-radius: 4px;
   }
   .ms-option:hover { background: var(--chip-bg); }
-  .ms-option input { cursor: pointer; }
+  .ms-option input { cursor: pointer; width: 16px; height: 16px; flex: none; }
   main {
-    padding: 0 clamp(16px, 4vw, 48px) 48px;
-    max-width: 1100px;
+    padding: 20px var(--pad-x) calc(48px + env(safe-area-inset-bottom));
+    padding-left: calc(var(--pad-x) + env(safe-area-inset-left));
+    padding-right: calc(var(--pad-x) + env(safe-area-inset-right));
+    max-width: 1200px;
+    margin: 0 auto;
   }
   .org-block { margin-bottom: 28px; }
   .org-title {
@@ -119,7 +168,7 @@
     padding-bottom: 6px;
     border-bottom: 2px solid var(--border);
   }
-  .project-block { margin: 12px 0 0 4px; }
+  .project-block { margin: 16px 0 0; }
   .project-title {
     font-size: 0.95rem;
     font-weight: 600;
@@ -128,6 +177,7 @@
   }
   table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -137,24 +187,113 @@
   }
   th, td {
     text-align: left;
-    padding: 8px 12px;
+    vertical-align: top;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
   }
   tr:last-child td { border-bottom: none; }
-  th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+  tbody tr:hover { background: color-mix(in srgb, var(--chip-bg) 45%, transparent); }
+  th { color: var(--muted); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.02em; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   .status-chip {
     display: inline-block;
-    padding: 2px 8px;
+    padding: 3px 9px;
     border-radius: 999px;
     background: var(--chip-bg);
     color: var(--accent);
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     white-space: nowrap;
   }
-  .empty { color: var(--muted); padding: 24px; text-align: center; }
-  .overflow-wrap { overflow-x: auto; }
+  .status-chip.muted { background: var(--chip-muted-bg); color: var(--chip-muted-text); }
+  .status-chip.done { background: var(--chip-done-bg); color: var(--chip-done-text); }
+  .deadline-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .deadline-flag.overdue { color: #c0362f; }
+  .deadline-flag.soon { color: #8a5a00; }
+  @media (prefers-color-scheme: dark) {
+    .deadline-flag.overdue { color: #ff9d97; }
+    .deadline-flag.soon { color: #ffcf5c; }
+  }
+  tbody tr.row-overdue { background: var(--row-overdue-bg); }
+  tbody tr.row-overdue:hover { background: var(--row-overdue-bg-hover); }
+  tbody tr.row-soon { background: var(--row-soon-bg); }
+  tbody tr.row-soon:hover { background: var(--row-soon-bg-hover); }
+  .overdue-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--row-overdue-bg);
+    border: 1px solid #c0362f33;
+  }
+  .overdue-summary-label { font-weight: 700; font-size: 0.85rem; color: #c0362f; }
+  .overdue-summary-person {
+    font-size: 0.82rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+  }
+  @media (prefers-color-scheme: dark) {
+    .overdue-summary { border-color: #ff9d9733; }
+    .overdue-summary-label { color: #ff9d97; }
+  }
+  .empty { color: var(--muted); padding: 40px 16px; text-align: center; }
+  .overflow-wrap { overflow-x: auto; border-radius: 10px; }
+
+  /* Card layout on narrow screens */
+  @media (max-width: 720px) {
+    header { flex-direction: column; align-items: flex-start; gap: 2px; padding-top: 10px; padding-bottom: 10px; }
+    h1 { font-size: 1.05rem; }
+    .controls { padding-top: 10px; padding-bottom: 10px; gap: 8px; }
+
+    /* Stack every filter full-width: half-width pairs made dropdown panels
+       (anchored left:0 to their own button) overflow past the viewport edge
+       for the right-hand control, and shrank tap targets below 44px. */
+    .multiselect, select#state-select, #search-box { flex: 1 1 100%; }
+    .ms-button, select, input[type="text"] { min-width: 0; min-height: 44px; }
+    .ms-panel { max-height: min(320px, 60vh); }
+    .ms-option { padding: 10px 6px; font-size: 0.9rem; }
+    .ms-option input { width: 18px; height: 18px; }
+
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    .overflow-wrap { overflow-x: visible; }
+    table { border-radius: 0; border: none; background: none; }
+    tbody tr {
+      margin-bottom: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    tbody tr:hover { background: var(--card-bg); }
+    td {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      padding: 8px 12px;
+    }
+    td::before {
+      content: attr(data-label);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+  }
 </style>
 </head>
 <body>
@@ -204,6 +343,64 @@ let selectedStatuses = new Set();
 let openPanels = [];
 
 const NO_STATUS_LABEL = "(no status)";
+
+const STATUS_LIST = [
+  "PARKING LOT",
+  "BACKLOG",
+  "需求確認中",
+  "READY FOR RD",
+  "RD處理中",
+  "待部署DEV",
+  "DEV待測試",
+  "DEV測試中",
+  "DEV測試完成",
+  "待上SIT",
+  "SIT待測試",
+  "SIT測試中",
+  "SIT測試完成",
+  "待部署UAT",
+  "待上UAT",
+  "UAT待測試",
+  "UAT測試中",
+  "UAT QA測試中",
+  "UAT測試完成",
+  "UAT QA測試完成",
+  "客戶測試中",
+  "UAT 客戶測試中",
+  "待佈署PROD",
+  "待上PROD",
+  "已上PROD",
+  "PREPROD測試中",
+  "PROD測試中",
+  "DONE",
+  "CANCELLED",
+  // Unilever #5 (dev worklist) 專用流程
+  "未開始",
+  "開發中",
+  "可進測試",
+  "卡住",
+  // Unilever #4 (spec tickets) 專用流程
+  "待提問",
+  "討論中",
+  "待補充",
+  "已決議",
+  "已落規格",
+  "作廢",
+];
+
+const DEFAULT_UNCHECKED_STATUSES = new Set([
+  "PARKING LOT",
+  "BACKLOG",
+  "DONE",
+  "CANCELLED",
+  "已落規格",
+  "作廢",
+]);
+
+function normalizeStatusKey(s) {
+  const trimmed = (s || "").trim();
+  return /^[A-Za-z ]+$/.test(trimmed) ? trimmed.toUpperCase() : trimmed;
+}
 
 function closeAllPanels() {
   for (const p of openPanels) p.hidden = true;
@@ -299,7 +496,9 @@ function getFilteredItems() {
 
   if (stateFilter !== "ALL") items = items.filter((i) => i.state === stateFilter);
 
-  items = items.filter((i) => selectedStatuses.has(i.status || NO_STATUS_LABEL));
+  items = items.filter((i) =>
+    selectedStatuses.has(i.status ? normalizeStatusKey(i.status) : NO_STATUS_LABEL)
+  );
 
   if (search) {
     items = items.filter(
@@ -331,6 +530,9 @@ function render() {
     main.innerHTML = '<div class="empty">沒有符合條件的任務。</div>';
     return;
   }
+
+  const overdueSummary = buildOverdueSummary(items);
+  if (overdueSummary) main.appendChild(overdueSummary);
 
   const orgs = groupByOrgProject(items);
   const sortedOrgs = Array.from(orgs.keys()).sort();
@@ -366,24 +568,34 @@ function render() {
       wrap.className = "overflow-wrap";
       const table = document.createElement("table");
       table.innerHTML = `
-        <thead><tr><th>#</th><th>Title</th><th>Repo</th><th>Assignee</th><th>State</th><th>Status</th></tr></thead>
+        <colgroup>
+          <col style="width:6%"><col style="width:30%"><col style="width:12%">
+          <col style="width:16%"><col style="width:8%"><col style="width:15%"><col style="width:13%">
+        </colgroup>
+        <thead><tr><th>#</th><th>Title</th><th>Repo</th><th>Assignee</th><th>State</th><th>Status</th><th>Deadline</th></tr></thead>
       `;
       const tbody = document.createElement("tbody");
       const sortedItems = proj.items.sort(
-        (a, b) => a.assigneeLogin.localeCompare(b.assigneeLogin) || a.number - b.number
+        (a, b) =>
+          (a.deadline || "9999-99-99").localeCompare(b.deadline || "9999-99-99") ||
+          a.assigneeLogin.localeCompare(b.assigneeLogin) ||
+          a.number - b.number
       );
       for (const item of sortedItems) {
         const assigneeLabel = item.assigneeName
           ? `${item.assigneeName} (${item.assigneeLogin})`
           : item.assigneeLogin;
         const tr = document.createElement("tr");
+        const dCls = deadlineClass(item);
+        if (dCls) tr.className = `row-${dCls}`;
         tr.innerHTML = `
-          <td>#${item.number}</td>
-          <td><a href="${item.url}" target="_blank">${escapeHtml(item.title)}</a></td>
-          <td>${escapeHtml(item.repo || "")}</td>
-          <td>${escapeHtml(assigneeLabel)}</td>
-          <td>${item.state}</td>
-          <td>${item.status ? `<span class="status-chip">${escapeHtml(item.status)}</span>` : ""}</td>
+          <td data-label="#">#${item.number}</td>
+          <td data-label="Title"><a href="${item.url}" target="_blank">${escapeHtml(item.title)}</a></td>
+          <td data-label="Repo">${escapeHtml(item.repo || "")}</td>
+          <td data-label="Assignee">${escapeHtml(assigneeLabel)}</td>
+          <td data-label="State">${item.state}</td>
+          <td data-label="Status">${item.status ? `<span class="status-chip ${statusChipClass(item.status)}">${escapeHtml(item.status)}</span>` : ""}</td>
+          <td data-label="Deadline">${renderDeadline(item)}</td>
         `;
         tbody.appendChild(tr);
       }
@@ -394,6 +606,76 @@ function render() {
     }
     main.appendChild(orgBlock);
   }
+}
+
+const DONE_STATUS_KEYWORDS = ["DONE", "已上PROD", "已決議"];
+const MUTED_STATUS_KEYWORDS = ["PARKING LOT", "BACKLOG", "CANCELLED", "作廢", "未開始", "卡住"];
+
+function statusChipClass(status) {
+  const key = normalizeStatusKey(status);
+  if (DONE_STATUS_KEYWORDS.includes(key)) return "done";
+  if (MUTED_STATUS_KEYWORDS.includes(key)) return "muted";
+  return "";
+}
+
+const DUE_SOON_DAYS = 3;
+
+function daysUntil(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const target = Date.UTC(y, m - 1, d);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((target - today) / 86400000);
+}
+
+// Returns "overdue" | "soon" | null. Closed/cancelled items never flag.
+function deadlineClass(item) {
+  if (!item.deadline || item.state !== "OPEN") return null;
+  const days = daysUntil(item.deadline);
+  if (days < 0) return "overdue";
+  if (days <= DUE_SOON_DAYS) return "soon";
+  return null;
+}
+
+function renderDeadline(item) {
+  if (!item.deadline) return "";
+  const cls = deadlineClass(item);
+  if (cls === "overdue") return `<span class="deadline-flag overdue">${escapeHtml(item.deadline)}</span>`;
+  if (cls === "soon") return `<span class="deadline-flag soon">${escapeHtml(item.deadline)}</span>`;
+  return escapeHtml(item.deadline);
+}
+
+// Builds a banner listing every assignee with at least one overdue item
+// among the currently filtered items. Returns null when nobody is overdue.
+function buildOverdueSummary(items) {
+  const overdueByLogin = new Map(); // login -> { name, count }
+  for (const item of items) {
+    if (deadlineClass(item) !== "overdue") continue;
+    if (!overdueByLogin.has(item.assigneeLogin)) {
+      overdueByLogin.set(item.assigneeLogin, { name: item.assigneeName, count: 0 });
+    }
+    overdueByLogin.get(item.assigneeLogin).count++;
+  }
+  if (overdueByLogin.size === 0) return null;
+
+  const box = document.createElement("div");
+  box.className = "overdue-summary";
+
+  const label = document.createElement("span");
+  label.className = "overdue-summary-label";
+  label.textContent = "超時：";
+  box.appendChild(label);
+
+  const sortedLogins = Array.from(overdueByLogin.keys()).sort();
+  for (const login of sortedLogins) {
+    const { name, count } = overdueByLogin.get(login);
+    const person = document.createElement("span");
+    person.className = "overdue-summary-person";
+    const label2 = name ? `${name} (${login})` : login;
+    person.textContent = count > 1 ? `${label2} ×${count}` : label2;
+    box.appendChild(person);
+  }
+  return box;
 }
 
 function escapeHtml(s) {
@@ -424,17 +706,20 @@ async function init() {
   const sortedUsers = [...DATA.users].sort((a, b) => a.login.localeCompare(b.login));
   selectedLogins = new Set(sortedUsers.map((u) => u.login));
 
-  const statusSet = new Set();
   let hasNoStatus = false;
   for (const u of DATA.users) {
     for (const item of u.items || []) {
-      if (item.status) statusSet.add(item.status);
-      else hasNoStatus = true;
+      if (!item.status) hasNoStatus = true;
     }
   }
-  const sortedStatuses = Array.from(statusSet).sort();
-  if (hasNoStatus) sortedStatuses.push(NO_STATUS_LABEL);
-  selectedStatuses = new Set(sortedStatuses);
+  const statusItems = STATUS_LIST.map((s) => ({ key: normalizeStatusKey(s), label: s }));
+  if (hasNoStatus) statusItems.push({ key: NO_STATUS_LABEL, label: NO_STATUS_LABEL });
+
+  selectedStatuses = new Set(
+    statusItems
+      .filter((s) => !DEFAULT_UNCHECKED_STATUSES.has(s.key))
+      .map((s) => s.key)
+  );
 
   setupMultiSelect({
     btnId: "assignee-ms-btn",
@@ -452,7 +737,7 @@ async function init() {
     btnId: "status-ms-btn",
     panelId: "status-ms-panel",
     optionsId: "status-ms-options",
-    items: sortedStatuses.map((s) => ({ key: s, label: s })),
+    items: statusItems,
     selected: selectedStatuses,
     label: "Status",
   });

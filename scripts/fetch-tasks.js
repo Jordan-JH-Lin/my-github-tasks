@@ -97,8 +97,11 @@ async function searchAssignedIssues(login, excludedProjectUrls, allowedOrgs) {
                     ... on User { login }
                   }
                 }
-                fieldValueByName(name: "Status") {
+                statusField: fieldValueByName(name: "Status") {
                   ... on ProjectV2ItemFieldSingleSelectValue { name }
+                }
+                deadlineField: fieldValueByName(name: "Deadline") {
+                  ... on ProjectV2ItemFieldDateValue { date }
                 }
               }
             }
@@ -117,20 +120,9 @@ async function searchAssignedIssues(login, excludedProjectUrls, allowedOrgs) {
       if (!node || !node.repository) continue; // skip PRs / other types if any slip through
       const repoOwner = node.repository.owner.login;
       const repoName = node.repository.name;
-      if (node.projectItems.nodes.length === 0) {
-        if (!allowedOrgs.has(repoOwner)) continue;
-        items.push({
-          org: repoOwner,
-          project: null,
-          projectUrl: null,
-          repo: repoName,
-          number: node.number,
-          title: node.title,
-          url: node.url,
-          state: node.state,
-          status: null,
-        });
-      } else {
+      // Issues never added to any Projects v2 board are dropped: this
+      // dashboard is meant to be project-centric only.
+      if (node.projectItems.nodes.length > 0) {
         for (const pi of node.projectItems.nodes) {
           if (excludedProjectUrls.has(pi.project.url)) continue;
           const org = projectOwnerLogin(pi.project.owner) || repoOwner;
@@ -144,7 +136,8 @@ async function searchAssignedIssues(login, excludedProjectUrls, allowedOrgs) {
             title: node.title,
             url: node.url,
             state: node.state,
-            status: pi.fieldValueByName ? pi.fieldValueByName.name : null,
+            status: pi.statusField ? pi.statusField.name : null,
+            deadline: pi.deadlineField ? pi.deadlineField.date : null,
           });
         }
       }

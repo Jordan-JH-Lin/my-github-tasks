@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-09-01T09:00:00.000Z",
+  "orgs": ["AcmeCorp", "Unilever", "McDonalds"],
+  "users": [
+    {
+      "login": "jordanlin",
+      "name": "Jordan Lin",
+      "items": [
+        {
+          "org": "AcmeCorp",
+          "project": "Platform Roadmap",
+          "projectUrl": "https://github.com/orgs/AcmeCorp/projects/1",
+          "repo": "acme-web",
+          "number": 123,
+          "title": "Fix responsive layout regression on checkout page after design system migration",
+          "url": "https://github.com/AcmeCorp/acme-web/issues/123",
+          "state": "OPEN",
+          "status": "RD處理中",
+          "deadline": "2026-08-20"
+        },
+        {
+          "org": "AcmeCorp",
+          "project": "Platform Roadmap",
+          "projectUrl": "https://github.com/orgs/AcmeCorp/projects/1",
+          "repo": "acme-api",
+          "number": 45,
+          "title": "Add pagination to /v2/orders endpoint",
+          "url": "https://github.com/AcmeCorp/acme-api/issues/45",
+          "state": "OPEN",
+          "status": "待部署DEV",
+          "deadline": "2026-09-10"
+        },
+        {
+          "org": "Unilever",
+          "project": "Dev Worklist",
+          "projectUrl": "https://github.com/orgs/Unilever/projects/5",
+          "repo": "uni-dev-worklist",
+          "number": 9,
+          "title": "開發中項目：更新首頁 banner 輪播元件，需支援多語系與延遲載入",
+          "url": "https://github.com/Unilever/uni-dev-worklist/issues/9",
+          "state": "OPEN",
+          "status": "開發中",
+          "deadline": null
+        },
+        {
+          "org": "McDonalds",
+          "project": "Ops Board",
+          "projectUrl": "https://github.com/orgs/McDonalds/projects/2",
+          "repo": "mcd-pos",
+          "number": 7,
+          "title": "POS 結帳流程優化",
+          "url": "https://github.com/McDonalds/mcd-pos/issues/7",
+          "state": "CLOSED",
+          "status": "已上PROD",
+          "deadline": "2026-08-01"
+        }
+      ]
+    },
+    {
+      "login": "alicewu",
+      "name": "Alice Wu",
+      "items": [
+        {
+          "org": "AcmeCorp",
+          "project": "Platform Roadmap",
+          "projectUrl": "https://github.com/orgs/AcmeCorp/projects/1",
+          "repo": "acme-web",
+          "number": 130,
+          "title": "Design new empty state illustrations",
+          "url": "https://github.com/AcmeCorp/acme-web/issues/130",
+          "state": "OPEN",
+          "status": "UAT測試中",
+          "deadline": "2026-09-03"
+        },
+        {
+          "org": "Unilever",
+          "project": "Spec Tickets",
+          "projectUrl": "https://github.com/orgs/Unilever/projects/4",
+          "repo": "uni-spec",
+          "number": 18,
+          "title": "規格確認：會員等級調整機制",
+          "url": "https://github.com/Unilever/uni-spec/issues/18",
+          "state": "OPEN",
+          "status": "討論中",
+          "deadline": null
+        },
+        {
+          "org": "McDonalds",
+          "project": "Ops Board",
+          "projectUrl": "https://github.com/orgs/McDonalds/projects/2",
+          "repo": "mcd-pos",
+          "number": 11,
+          "title": "新增門市庫存同步排程 job，避免深夜批次延遲影響隔日開店備貨作業",
+          "url": "https://github.com/McDonalds/mcd-pos/issues/11",
+          "state": "OPEN",
+          "status": "SIT測試完成",
+          "deadline": "2026-07-15"
+        }
+      ]
+    },
+    {
+      "login": "bobchen",
+      "name": null,
+      "items": [
+        {
+          "org": "AcmeCorp",
+          "project": "Platform Roadmap",
+          "projectUrl": "https://github.com/orgs/AcmeCorp/projects/1",
+          "repo": "acme-infra",
+          "number": 3,
+          "title": "Rotate expired TLS cert for staging cluster",
+          "url": "https://github.com/AcmeCorp/acme-infra/issues/3",
+          "state": "OPEN",
+          "status": null,
+          "deadline": null
+        },
+        {
+          "org": "AcmeCorp",
+          "project": "Platform Roadmap",
+          "projectUrl": "https://github.com/orgs/AcmeCorp/projects/1",
+          "repo": "acme-web",
+          "number": 99,
+          "title": "Archive deprecated marketing landing pages",
+          "url": "https://github.com/AcmeCorp/acme-web/issues/99",
+          "state": "CLOSED",
+          "status": "CANCELLED",
+          "deadline": "2026-06-30"
+        }
+      ]
+    }
+  ]
+}
